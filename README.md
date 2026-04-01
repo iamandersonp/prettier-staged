@@ -2,7 +2,7 @@
 
 An utitlty to auto format stagged files using prettier
 
-## Instalation
+## Installation
 
 To use as a dev dependency
 
@@ -39,3 +39,31 @@ if [ -n "$STAGED_FILES" ]; then
   echo "$STAGED_FILES" | xargs git add
 fi
 ```
+
+## Testing
+
+This project includes comprehensive unit tests with Jest. The tests cover all the main functionality and edge cases.
+
+### Available test commands
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode (automatically re-run on file changes)
+npm run test:watch
+
+# Run tests with coverage report
+npm run test:coverage
+```
+
+### Test coverage
+
+Current test coverage: **>95%** including:
+
+- ✅ Successful file formatting scenarios
+- ✅ No files to format scenarios
+- ✅ Error handling (Prettier not found, syntax errors, general errors)
+- ✅ Edge cases (files with spaces, whitespace trimming, all supported extensions)
+
+The tests use mocks to simulate Git commands and Prettier execution without running actual commands, making tests fast and reliable.

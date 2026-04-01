@@ -1,12 +1,14 @@
 {
   "name": "preetier-staged",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "src/index.js",
   "bin": {
     "prettier-staged": "src/index.js"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
     "prettier-staged": "src/index.js",
     "release": "standard-version",
     "setup:git-hooks": "git config core.hooksPath .git-hooks || true && chmod +x ./.git-hooks/*",
@@ -15,13 +17,19 @@
     "release:major": "standard-version --release-as major",
     "prepare": "npm run setup:git-hooks"
   },
-  "keywords": [],
+  "keywords": [
+    "prettier",
+    "staged",
+    "git",
+    "hooks"
+  ],
   "author": "",
   "license": "GPL-3.0-only",
   "description": "",
   "devDependencies": {
     "@commitlint/cli": "^20.5.0",
     "@commitlint/config-conventional": "^20.5.0",
+    "jest": "^30.3.0",
     "prettier": "^3.8.1",
     "standard-version": "^9.5.0"
   }
