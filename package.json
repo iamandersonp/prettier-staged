@@ -1,0 +1,28 @@
+{
+  "name": "preetier-staged",
+  "version": "0.0.0",
+  "main": "src/index.js",
+  "bin": {
+    "prettier-staged": "src/index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prettier-staged": "src/index.js",
+    "release": "standard-version",
+    "setup:git-hooks": "git config core.hooksPath .git-hooks || true && chmod +x ./.git-hooks/*",
+    "release:minor": "standard-version --release-as minor",
+    "release:patch": "standard-version --release-as patch",
+    "release:major": "standard-version --release-as major",
+    "prepare": "npm run setup:git-hooks"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
+    "prettier": "^3.8.1",
+    "standard-version": "^9.5.0"
+  }
+}

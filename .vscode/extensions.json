@@ -1,0 +1,17 @@
+{
+  "recommendations": [
+    "esbenp.prettier-vscode",
+    "angular.ng-template",
+    "cyrilletuzi.angular-schematics",
+    "formulahendry.auto-close-tag",
+    "steoates.autoimport",
+    "formulahendry.auto-rename-tag",
+    "oouo-diogo-perdigao.docthis",
+    "dbaeumer.vscode-eslint",
+    "mhutchie.git-graph",
+    "donjayamanne.githistory",
+    "mohsen1.prettify-json",
+    "vivaxy.vscode-conventional-commits",
+    "firsttris.vscode-jest-runner"
+  ]
+}
