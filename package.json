@@ -28,8 +28,10 @@
     "type": "git",
     "url": "git+https://github.com/iamandersonp/preetier-staged.git"
   },
+  "homepage": "https://github.com/iamandersonp/preetier-staged",
   "license": "GPL-3.0-only",
   "description": "An utility to auto format staged files using Prettier",
+  "readme": "README.md",
   "dependencies": {
     "prettier": "^3.8.1"
   },
