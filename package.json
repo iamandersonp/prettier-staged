@@ -15,7 +15,7 @@
     "release:minor": "standard-version --release-as minor",
     "release:patch": "standard-version --release-as patch",
     "release:major": "standard-version --release-as major",
-    "prepare": "npm run setup:git-hooks"
+    "postinstall": "npm run setup:git-hooks"
   },
   "keywords": [
     "prettier",
@@ -29,12 +29,14 @@
     "url": "https://github.com/iamandersonp/preetier-staged.git"
   },
   "license": "GPL-3.0-only",
-  "description": "",
+  "description": "An utility to auto format staged files using Prettier",
+  "dependencies": {
+    "prettier": "^3.8.1"
+  },
   "devDependencies": {
     "@commitlint/cli": "^20.5.0",
     "@commitlint/config-conventional": "^20.5.0",
     "jest": "^30.3.0",
-    "prettier": "^3.8.1",
     "standard-version": "^9.5.0"
   }
 }
