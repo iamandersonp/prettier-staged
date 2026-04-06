@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.1](https://github.com/iamandersonp/preetier-staged/compare/v0.1.0...v0.1.1) (2026-04-06)
+
+
+### Features
+
+* :sparkles: instalation hook folder from .env file ([2414b31](https://github.com/iamandersonp/preetier-staged/commits/2414b317c6c6c40bd6818738e20cc8b6091fad5e))
+
+
+### Bug Fixes
+
+* :zap: instalation hook folder ([5acc701](https://github.com/iamandersonp/preetier-staged/commits/5acc701139e9f0bf7cdc0a0714e4c7285093efcc))
+
 ## [0.1.0](https://github.com/iamandersonp/preetier-staged/compare/v0.0.7...v0.1.0) (2026-04-06)
 
 
