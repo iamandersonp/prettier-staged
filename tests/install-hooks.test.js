@@ -12,6 +12,7 @@ const {
   copyPreCommitHook,
   setupLibraryGitHooks,
   installHooks,
+  getHooksDirFromEnv,
   HOOKS_DIR
 } = require('../src/install-hooks.js');
 
@@ -28,6 +29,7 @@ describe('install-hooks', () => {
     fs.mkdirSync = jest.fn();
     fs.copyFileSync = jest.fn();
     fs.chmodSync = jest.fn();
+    fs.readFileSync = jest.fn();
 
     // Setup child_process mocks explicitly
     execSync.mockReset();
@@ -46,6 +48,83 @@ describe('install-hooks', () => {
     process.env = originalEnv;
     consoleSpy.mockRestore();
     warnSpy.mockRestore();
+  });
+
+  describe('getHooksDirFromEnv', () => {
+    beforeEach(() => {
+      // Reset process.cwd for these tests
+      jest.spyOn(process, 'cwd').mockReturnValue('/test/project');
+    });
+
+    afterEach(() => {
+      process.cwd.mockRestore();
+    });
+
+    it('should return default value when .env file does not exist', () => {
+      fs.existsSync.mockReturnValue(false);
+
+      const result = getHooksDirFromEnv();
+
+      expect(result).toBe('.git-hooks');
+      expect(fs.existsSync).toHaveBeenCalledWith('/test/project/.env');
+    });
+
+    it('should return value from .env file when HOOKS_DIR is set', () => {
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockReturnValue('NODE_ENV=test\nHOOKS_DIR=custom-hooks\nOTHER=value');
+
+      const result = getHooksDirFromEnv();
+
+      expect(result).toBe('custom-hooks');
+      expect(fs.readFileSync).toHaveBeenCalledWith('/test/project/.env', 'utf8');
+    });
+
+    it('should return default value when .env exists but HOOKS_DIR is not set', () => {
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockReturnValue('NODE_ENV=test\nOTHER=value');
+
+      const result = getHooksDirFromEnv();
+
+      expect(result).toBe('.git-hooks');
+    });
+
+    it('should remove quotes from HOOKS_DIR value', () => {
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockReturnValue('HOOKS_DIR="quoted-hooks"');
+
+      const result = getHooksDirFromEnv();
+
+      expect(result).toBe('quoted-hooks');
+    });
+
+    it('should remove single quotes from HOOKS_DIR value', () => {
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockReturnValue("HOOKS_DIR='single-quoted'");
+
+      const result = getHooksDirFromEnv();
+
+      expect(result).toBe('single-quoted');
+    });
+
+    it('should handle file read errors gracefully', () => {
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockImplementation(() => {
+        throw new Error('Permission denied');
+      });
+
+      const result = getHooksDirFromEnv();
+
+      expect(result).toBe('.git-hooks');
+    });
+
+    it('should return default value when HOOKS_DIR is empty', () => {
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockReturnValue('HOOKS_DIR=\nOTHER=value');
+
+      const result = getHooksDirFromEnv();
+
+      expect(result).toBe('.git-hooks');
+    });
   });
 
   describe('isExternalInstallation', () => {

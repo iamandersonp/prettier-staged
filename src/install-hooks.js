@@ -3,8 +3,44 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-// Constante para el directorio de hooks
-const HOOKS_DIR = '.git-hooks';
+/**
+ * Lee el archivo .env para obtener HOOKS_DIR, retorna el valor por defecto si no existe
+ */
+function getHooksDirFromEnv() {
+  const defaultHooksDir = '.git-hooks';
+
+  try {
+    const envPath = path.join(process.cwd(), '.env');
+
+    if (!fs.existsSync(envPath)) {
+      return defaultHooksDir;
+    }
+
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    const lines = envContent.split('\n');
+
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      if (trimmedLine.startsWith('HOOKS_DIR=')) {
+        const value = trimmedLine.substring('HOOKS_DIR='.length).trim();
+        // Remover comillas si existen (simples o dobles)
+        let cleanValue = value
+          .replace(/^['"]/, '') // Remover comilla de inicio
+          .replace(/['"]$/, ''); // Remover comilla de final
+        return cleanValue || defaultHooksDir;
+      }
+    }
+
+    return defaultHooksDir;
+  } catch (error) {
+    // Si hay cualquier error leyendo el archivo, usar valor por defecto
+    console.warn('Warning: Could not read .env file, using default HOOKS_DIR:', error.message);
+    return defaultHooksDir;
+  }
+}
+
+// Constante para el directorio de hooks (lee desde .env o usa valor por defecto)
+const HOOKS_DIR = getHooksDirFromEnv();
 
 /**
  * Detects if the package is being installed as a dependency in another project
@@ -119,6 +155,7 @@ module.exports = {
   copyPreCommitHook,
   setupLibraryGitHooks,
   installHooks,
+  getHooksDirFromEnv,
   HOOKS_DIR
 };
 
