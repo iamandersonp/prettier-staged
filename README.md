@@ -24,9 +24,33 @@ Create a command on your package.json
 "prettier-staged": "prettier-staged",
 ```
 
-By default preetier-stagged will check stagged files, so it's recommended to set up the pre-commit git hook
+## Automatic Hook Installation
 
-This is an example of a posible implementation. In this example we skip the execution of command if there is a merge in progress
+When installed as a dependency (not during local development), preetier-staged automatically copies a pre-commit hook to your project's `git-hooks/` directory. This provides a ready-to-use solution for formatting staged files.
+
+### What gets installed
+
+- A `git-hooks/pre-commit` file that:
+  - Skips formatting during merge conflicts
+  - Runs tests (if configured)
+  - Formats staged files with Prettier
+  - Re-stages formatted files automatically
+
+### How to use the copied hook
+
+After installation, run this command in your project root to use the copied hook:
+
+```bash
+git config core.hooksPath git-hooks
+```
+
+### Hook behavior
+
+- ✅ **Safe**: Only copies if `git-hooks/pre-commit` doesn't exist (won't overwrite)
+- ✅ **Smart**: Only installs when added as a dependency, not during development
+- ✅ **Executable**: Automatically sets proper permissions (`chmod +x`)
+
+If you prefer a custom implementation, you can create your own pre-commit hook using this example:
 
 ```bash
 #!/bin/sh

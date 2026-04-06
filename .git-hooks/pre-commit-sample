@@ -1,0 +1,15 @@
+#!/bin/sh
+#
+
+if git ls-files -u | grep -q .; then
+echo "⚠️  Merge in progress with conflicts. Skipping Prettier to avoid issues."
+  exit 0
+fi
+
+npm run prettier-staged
+
+STAGED_FILES=$(git diff --name-only --cached --diff-filter=ACM | grep -E '\.(html|ts|scss|css|json)$')
+
+if [ -n "$STAGED_FILES" ]; then
+  echo "$STAGED_FILES" | xargs git add
+fi
