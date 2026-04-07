@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.3.1](https://github.com/iamandersonp/prettier-staged.git/compare/v0.3.0...v0.3.1) (2026-04-07)
+
+### Bug Fixes
+
+- :zap: pre-commit get extensions from .env ([06a66c4](https://github.com/iamandersonp/prettier-staged.git/commits/06a66c44b9029a0844a4245c51c2b342b31cf567))
+
 ## [0.3.0](https://github.com/iamandersonp/prettier-staged.git/compare/v0.2.0...v0.3.0) (2026-04-07)
 
 ### Features
