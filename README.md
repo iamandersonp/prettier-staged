@@ -147,9 +147,9 @@ When installed as a dependency, prettier-staged automatically:
 
 #### Automatic .env handling
 
-✅ **New project**: Creates `.env` from template → Ready to use immediately
-✅ **Existing .env**: Preserves your `.env` + creates `.env.example` backup
-✅ **Safe operation**: Never overwrites existing configuration
+- ✅ **New project**: Creates `.env` from template → Ready to use immediately
+- ✅ **Existing .env**: Preserves your `.env` + creates `.env.example` backup
+- ✅ **Safe operation**: Never overwrites existing configuration
 
 ### How to use the copied hook
 
