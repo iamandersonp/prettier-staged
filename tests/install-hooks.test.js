@@ -11,6 +11,7 @@ const {
   getTargetProjectDir,
   copyPreCommitHook,
   copyEnvExample,
+  addScriptToPackageJson,
   setupLibraryGitHooks,
   installHooks,
   getHooksDirFromEnv,
@@ -31,6 +32,7 @@ describe('install-hooks', () => {
     fs.copyFileSync = jest.fn();
     fs.chmodSync = jest.fn();
     fs.readFileSync = jest.fn();
+    fs.writeFileSync = jest.fn();
 
     // Setup child_process mocks explicitly
     execSync.mockReset();
@@ -386,6 +388,150 @@ describe('install-hooks', () => {
     });
   });
 
+  describe('addScriptToPackageJson', () => {
+    const targetDir = '/target/project';
+    const packageJsonPath = path.join(targetDir, 'package.json');
+    let originalCwd;
+
+    beforeEach(() => {
+      originalCwd = process.cwd;
+      if (process.cwd !== originalCwd) {
+        process.cwd = originalCwd;
+      }
+      process.env.INIT_CWD = targetDir;
+    });
+
+    afterEach(() => {
+      if (process.cwd !== originalCwd) {
+        process.cwd = originalCwd;
+      }
+    });
+
+    it('should skip if package.json does not exist', () => {
+      fs.existsSync.mockReturnValue(false);
+
+      addScriptToPackageJson();
+
+      expect(fs.writeFileSync).not.toHaveBeenCalled();
+      expect(warnSpy).toHaveBeenCalledWith('⚠️ package.json not found, skipping script addition');
+    });
+
+    it('should skip if prettier-staged script already exists', () => {
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockReturnValue(
+        JSON.stringify({
+          name: 'test-project',
+          scripts: {
+            'prettier-staged': 'prettier-staged'
+          }
+        })
+      );
+
+      addScriptToPackageJson();
+
+      expect(fs.writeFileSync).not.toHaveBeenCalled();
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '✅ prettier-staged script already exists in package.json'
+      );
+    });
+
+    it('should add prettier-staged script to existing scripts', () => {
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockReturnValue(
+        JSON.stringify({
+          name: 'test-project',
+          scripts: {
+            test: 'jest',
+            build: 'webpack'
+          }
+        })
+      );
+
+      addScriptToPackageJson();
+
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        packageJsonPath,
+        JSON.stringify(
+          {
+            name: 'test-project',
+            scripts: {
+              test: 'jest',
+              build: 'webpack',
+              'prettier-staged': 'prettier-staged'
+            }
+          },
+          null,
+          2
+        ) + '\n',
+        'utf8'
+      );
+      expect(consoleSpy).toHaveBeenCalledWith('✅ Added "prettier-staged" script to package.json');
+      expect(consoleSpy).toHaveBeenCalledWith('💡 You can now run: npm run prettier-staged');
+    });
+
+    it('should create scripts object if it does not exist', () => {
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockReturnValue(
+        JSON.stringify({
+          name: 'test-project',
+          version: '1.0.0'
+        })
+      );
+
+      addScriptToPackageJson();
+
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        packageJsonPath,
+        JSON.stringify(
+          {
+            name: 'test-project',
+            version: '1.0.0',
+            scripts: {
+              'prettier-staged': 'prettier-staged'
+            }
+          },
+          null,
+          2
+        ) + '\n',
+        'utf8'
+      );
+      expect(consoleSpy).toHaveBeenCalledWith('✅ Added "prettier-staged" script to package.json');
+    });
+
+    it('should handle JSON parse errors gracefully', () => {
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockReturnValue('invalid json');
+
+      addScriptToPackageJson();
+
+      expect(fs.writeFileSync).not.toHaveBeenCalled();
+      expect(warnSpy).toHaveBeenCalledWith(
+        '⚠️ Failed to add script to package.json:',
+        expect.any(String)
+      );
+    });
+
+    it('should handle file write errors gracefully', () => {
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockReturnValue(
+        JSON.stringify({
+          name: 'test-project',
+          scripts: {}
+        })
+      );
+      fs.writeFileSync.mockImplementation(() => {
+        throw new Error('Permission denied');
+      });
+
+      addScriptToPackageJson();
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        '⚠️ Failed to add script to package.json:',
+        'Permission denied'
+      );
+    });
+  });
+
   describe('setupLibraryGitHooks', () => {
     it('should configure git hooks successfully', () => {
       execSync.mockImplementation(() => {});
@@ -442,6 +588,15 @@ describe('install-hooks', () => {
         if (filePath.includes('.git-hooks/pre-commit-sample')) return true; // Source hook exists
         if (filePath.includes('.env.example')) return true; // Source .env.example exists
         return false; // Targets don't exist
+      });
+      fs.readFileSync.mockImplementation((filePath) => {
+        if (filePath === '/different/project/package.json') {
+          return JSON.stringify({
+            name: 'target-project',
+            scripts: { test: 'jest' }
+          });
+        }
+        return '';
       });
 
       installHooks();

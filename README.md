@@ -18,10 +18,23 @@ npm i -g @iamandersonp/prettier-staged
 
 ## Setup
 
-Create a command on your package.json
+**No setup required!** 🎉
+
+When you install prettier-staged as a dependency, it automatically adds the `prettier-staged` script to your `package.json`. You can start using it immediately:
+
+```bash
+npm run prettier-staged
+```
+
+**Manual setup** (only if automatic setup fails):
+If for some reason the automatic script addition doesn't work, you can add it manually:
 
 ```json
-"prettier-staged": "prettier-staged",
+{
+  "scripts": {
+    "prettier-staged": "prettier-staged"
+  }
+}
 ```
 
 ## File Extensions Configuration
@@ -113,17 +126,22 @@ If the `.env.example` file wasn't created automatically, you can create your own
 
 ### What gets installed
 
-When installed as a dependency, prettier-staged automatically copies:
+When installed as a dependency, prettier-staged automatically:
 
-- **Pre-commit hook**: A `{HOOKS_DIR}/pre-commit` file that:
+- **Pre-commit hook**: Copies a `{HOOKS_DIR}/pre-commit` file that:
   - Skips formatting during merge conflicts
   - Formats staged files with Prettier
   - Re-stages formatted files automatically
 
-- **Configuration template**: A `.env.example` file in your project root with:
+- **Configuration template**: Copies a `.env.example` file in your project root with:
   - Default `HOOKS_DIR` and `EXTENSIONS` settings
   - Example configurations for different project types
   - Ready-to-use template for customization
+
+- **NPM script**: Adds `"prettier-staged": "prettier-staged"` to your `package.json` scripts:
+  - Safe operation - won't overwrite existing scripts
+  - Creates `scripts` section if it doesn't exist
+  - Enables running `npm run prettier-staged` immediately
 
 ### How to use the copied hook
 
@@ -145,7 +163,8 @@ git config core.hooksPath your-custom-directory
 
 - ✅ **Safe**: Only copies files if they don't exist (won't overwrite)
 - ✅ **Smart**: Only installs when added as a dependency, not during development
-- ✅ **Complete**: Copies both pre-commit hook AND configuration template
+- ✅ **Complete**: Copies hook, configuration template AND adds NPM script
+- ✅ **Non-destructive**: Won't overwrite existing package.json scripts
 - ✅ **Executable**: Automatically sets proper permissions (`chmod +x`)
 - ✅ **Configurable**: Hooks directory can be customized via `.env` file
 - ✅ **Auto-configured**: Git hooks path is set automatically during installation
@@ -225,9 +244,14 @@ fi
    npm install -D @iamandersonp/prettier-staged
    ```
 
-2. **Optional: Configure your preferences**:
+2. **Everything is set up automatically!** ✨
 
-   A `.env.example` file is automatically copied to your project! Just:
+   The installation process automatically:
+   - 🔗 Adds `"prettier-staged": "prettier-staged"` to your package.json scripts
+   - 📁 Copies `.env.example` configuration template
+   - 🎯 Copies and configures the pre-commit hook
+
+3. **Optional: Customize your configuration**:
 
    ```bash
    # Copy the example configuration
@@ -237,21 +261,25 @@ fi
    # Defaults work great for most projects!
    ```
 
-3. **The hook is automatically set up!** No additional configuration needed.
+4. **Start using it immediately**:
 
-4. **Optional: Verify the setup**:
+   ```bash
+   # Run prettier-staged manually
+   npm run prettier-staged
+
+   # Or just make commits - the pre-commit hook will run automatically!
+   git add .
+   git commit -m "feat: add new feature"
+   ```
+
+5. **Optional: Verify the setup**:
 
    ```bash
    git config core.hooksPath  # Should show your hooks directory
    ls -la .git-hooks/         # Should show the pre-commit hook
    cat .env.example           # See available configuration options
+   npm run prettier-staged    # Test the script works
    ```
-
-## Testing
-
-This project includes comprehensive unit tests with Jest. The tests cover all the main functionality and edge cases.
-
-### Available test commands
 
 ```bash
 # Run all tests

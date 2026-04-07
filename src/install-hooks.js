@@ -162,6 +162,50 @@ function copyEnvExample() {
 }
 
 /**
+ * Adds the prettier-staged script to the target project's package.json
+ * if it doesn't already exist
+ */
+function addScriptToPackageJson() {
+  try {
+    const targetProjectDir = getTargetProjectDir();
+    const packageJsonPath = path.join(targetProjectDir, 'package.json');
+
+    if (!fs.existsSync(packageJsonPath)) {
+      console.warn('⚠️ package.json not found, skipping script addition');
+      return;
+    }
+
+    // Read existing package.json
+    const packageJsonContent = fs.readFileSync(packageJsonPath, 'utf8');
+    const packageJson = JSON.parse(packageJsonContent);
+
+    // Initialize scripts object if it doesn't exist
+    if (!packageJson.scripts) {
+      packageJson.scripts = {};
+    }
+
+    // Check if prettier-staged script already exists
+    if (packageJson.scripts['prettier-staged']) {
+      console.log('✅ prettier-staged script already exists in package.json');
+      return;
+    }
+
+    // Add the prettier-staged script
+    packageJson.scripts['prettier-staged'] = 'prettier-staged';
+
+    // Write updated package.json with proper formatting
+    const updatedContent = JSON.stringify(packageJson, null, 2) + '\n';
+    fs.writeFileSync(packageJsonPath, updatedContent, 'utf8');
+
+    console.log('✅ Added "prettier-staged" script to package.json');
+    console.log('💡 You can now run: npm run prettier-staged');
+  } catch (error) {
+    // Don't fail installation if script addition fails
+    console.warn('⚠️ Failed to add script to package.json:', error.message);
+  }
+}
+
+/**
  * Sets up git hooks in the library's own .git-hooks directory
  * (existing functionality)
  */
@@ -199,6 +243,7 @@ function installHooks() {
       console.log('📦 Installing as dependency, copying files...');
       copyPreCommitHook();
       copyEnvExample();
+      addScriptToPackageJson();
     } else {
       console.warn(`⚠️ No package.json found in ${targetProjectDir}. Aborting to prevent damage.`);
     }
@@ -215,6 +260,7 @@ module.exports = {
   getTargetProjectDir,
   copyPreCommitHook,
   copyEnvExample,
+  addScriptToPackageJson,
   setupLibraryGitHooks,
   installHooks,
   getHooksDirFromEnv,
