@@ -166,16 +166,37 @@ If you prefer a custom implementation, you can create your own pre-commit hook u
 
 ```bash
 #!/bin/sh
-# Replace .git-hooks with your HOOKS_DIR if customized
+# Función para leer extensiones desde .env
+get_extensions_from_env() {
+  local env_file=".env"
+  local default_extensions="html|ts|scss|css|json|js"
+
+  if [ ! -f "$env_file" ]; then
+    echo "$default_extensions"
+    return
+  fi
+
+  # Buscar EXTENSIONS en .env
+  local extensions=$(grep "^EXTENSIONS=" "$env_file" 2>/dev/null | cut -d'=' -f2- | tr -d '"' | tr -d "'")
+
+  if [ -n "$extensions" ]; then
+    # Convertir comas a | para el regex
+    echo "$extensions" | sed 's/,/|/g' | sed 's/ //g'
+  else
+    echo "$default_extensions"
+  fi
+}
 
 if git ls-files -u | grep -q .; then
-echo "⚠️  Merge in progress. Skipping Prettier to avoid issues."
+  echo "⚠️  Merge in progress. Skipping Prettier to avoid issues."
   exit 0
 fi
 
 npm run prettier-staged
 
-STAGED_FILES=$(git diff --name-only --cached --diff-filter=ACM | grep -E '\.(html|ts|scss|css|json|js)$')
+# Obtener extensiones desde .env y construir patrón dinámico
+EXTENSIONS_PATTERN=$(get_extensions_from_env)
+STAGED_FILES=$(git diff --name-only --cached --diff-filter=ACM | grep -E "\.($EXTENSIONS_PATTERN)$")
 
 if [ -n "$STAGED_FILES" ]; then
   echo "$STAGED_FILES" | xargs git add
