@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.5.0](https://github.com/iamandersonp/prettier-staged.git/compare/v0.4.1...v0.5.0) (2026-04-07)
+
+### Features
+
+- :sparkles: auto add script on install ([a3df697](https://github.com/iamandersonp/prettier-staged.git/commits/a3df6973b87a559599cf215a6406709e8eae60d8))
+- :sparkles: full automated install ([a0a9ea4](https://github.com/iamandersonp/prettier-staged.git/commits/a0a9ea478ccb557c11bd0467605f061c50dab2e4))
+
 ### [0.4.1](https://github.com/iamandersonp/prettier-staged.git/compare/v0.4.0...v0.4.1) (2026-04-07)
 
 ### Bug Fixes
