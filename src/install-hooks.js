@@ -129,16 +129,26 @@ function copyPreCommitHook() {
 
 /**
  * Copies the .env.example file to the target project's root directory
- * if it doesn't already exist
+ * if it doesn't already exist, and renames it to .env if .env doesn't exist
  */
 function copyEnvExample() {
   try {
     const targetProjectDir = getTargetProjectDir();
     const targetEnvExamplePath = path.join(targetProjectDir, '.env.example');
+    const targetEnvPath = path.join(targetProjectDir, '.env');
 
     // Check if .env.example already exists
     if (fs.existsSync(targetEnvExamplePath)) {
       console.log('✅ .env.example already exists, skipping copy');
+
+      // Even if .env.example exists, check if we should rename it to .env
+      if (fs.existsSync(targetEnvPath)) {
+        console.log('💡 .env already exists, keeping both files');
+      } else {
+        fs.renameSync(targetEnvExamplePath, targetEnvPath);
+        console.log('✅ Renamed .env.example to .env');
+        console.log('💡 Environment configuration is ready to use');
+      }
       return;
     }
 
@@ -152,12 +162,65 @@ function copyEnvExample() {
 
     // Copy the file
     fs.copyFileSync(sourceEnvExamplePath, targetEnvExamplePath);
-
     console.log('✅ Copied .env.example to project root');
-    console.log('💡 Configure your environment by copying .env.example to .env');
+
+    // Check if .env already exists before renaming
+    if (fs.existsSync(targetEnvPath)) {
+      console.log('💡 .env already exists, keeping .env.example as backup');
+      console.log('💡 You can configure your environment by editing the existing .env file');
+    } else {
+      // Rename .env.example to .env
+      fs.renameSync(targetEnvExamplePath, targetEnvPath);
+      console.log('✅ Renamed .env.example to .env');
+      console.log('💡 Environment configuration is ready to use');
+    }
   } catch (error) {
     // Don't fail installation if .env.example copy fails
     console.warn('⚠️ Failed to copy .env.example:', error.message);
+  }
+}
+
+/**
+ * Adds the prettier-staged script to the target project's package.json
+ * if it doesn't already exist
+ */
+function addScriptToPackageJson() {
+  try {
+    const targetProjectDir = getTargetProjectDir();
+    const packageJsonPath = path.join(targetProjectDir, 'package.json');
+
+    if (!fs.existsSync(packageJsonPath)) {
+      console.warn('⚠️ package.json not found, skipping script addition');
+      return;
+    }
+
+    // Read existing package.json
+    const packageJsonContent = fs.readFileSync(packageJsonPath, 'utf8');
+    const packageJson = JSON.parse(packageJsonContent);
+
+    // Initialize scripts object if it doesn't exist
+    if (!packageJson.scripts) {
+      packageJson.scripts = {};
+    }
+
+    // Check if prettier-staged script already exists
+    if (packageJson.scripts['prettier-staged']) {
+      console.log('✅ prettier-staged script already exists in package.json');
+      return;
+    }
+
+    // Add the prettier-staged script
+    packageJson.scripts['prettier-staged'] = 'prettier-staged';
+
+    // Write updated package.json with proper formatting
+    const updatedContent = JSON.stringify(packageJson, null, 2) + '\n';
+    fs.writeFileSync(packageJsonPath, updatedContent, 'utf8');
+
+    console.log('✅ Added "prettier-staged" script to package.json');
+    console.log('💡 You can now run: npm run prettier-staged');
+  } catch (error) {
+    // Don't fail installation if script addition fails
+    console.warn('⚠️ Failed to add script to package.json:', error.message);
   }
 }
 
@@ -188,9 +251,6 @@ function setupLibraryGitHooks() {
 function installHooks() {
   console.log('🔧 Setting up prettier-staged hooks...');
 
-  // Always setup hooks for the library itself
-  setupLibraryGitHooks();
-
   // Only copy to target project if this is an external installation
   if (isExternalInstallation()) {
     const targetProjectDir = getTargetProjectDir();
@@ -199,12 +259,15 @@ function installHooks() {
       console.log('📦 Installing as dependency, copying files...');
       copyPreCommitHook();
       copyEnvExample();
+      addScriptToPackageJson();
     } else {
       console.warn(`⚠️ No package.json found in ${targetProjectDir}. Aborting to prevent damage.`);
     }
   } else {
     console.log('🏠 Running in development mode, skipping file copies');
   }
+  // Always setup hooks
+  setupLibraryGitHooks();
 
   console.log('✨ Setup complete!');
 }
@@ -215,6 +278,7 @@ module.exports = {
   getTargetProjectDir,
   copyPreCommitHook,
   copyEnvExample,
+  addScriptToPackageJson,
   setupLibraryGitHooks,
   installHooks,
   getHooksDirFromEnv,
