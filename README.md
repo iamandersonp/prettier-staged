@@ -1,4 +1,4 @@
-# preetier-staged
+# prettier-staged
 
 An utitlty to auto format stagged files using prettier
 
@@ -7,13 +7,13 @@ An utitlty to auto format stagged files using prettier
 To use as a dev dependency
 
 ```bash
-npm i -D preetier-staged
+npm i -D prettier-staged
 ```
 
 To use as a global
 
 ```bash
-npm i -g preetier-staged
+npm i -g prettier-staged
 ```
 
 ## Setup
@@ -26,7 +26,7 @@ Create a command on your package.json
 
 ## Automatic Hook Installation
 
-When installed as a dependency (not during local development), preetier-staged automatically copies a pre-commit hook to your project's hooks directory. This provides a ready-to-use solution for formatting staged files.
+When installed as a dependency (not during local development), prettier-staged automatically copies a pre-commit hook to your project's hooks directory. This provides a ready-to-use solution for formatting staged files.
 
 ### Configuration
 
@@ -129,7 +129,7 @@ fi
 1. **Install the package**:
 
    ```bash
-   npm install -D preetier-staged
+   npm install -D prettier-staged
    ```
 
 2. **Optional: Configure hooks directory**:
