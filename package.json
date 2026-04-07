@@ -21,7 +21,11 @@
     "prettier",
     "staged",
     "git",
-    "hooks"
+    "hooks",
+    "formatting",
+    "configurable",
+    "extensions",
+    "pre-commit"
   ],
   "author": "Anderson Penaloza <info@iamanderson.dev>",
   "repository": {
@@ -30,7 +34,7 @@
   },
   "homepage": "https://github.com/iamandersonp/prettier-staged.git",
   "license": "GPL-3.0-only",
-  "description": "An utility to auto format staged files using Prettier",
+  "description": "Configurable utility to auto-format staged files using Prettier with customizable file extensions and hooks directory",
   "readme": "README.md",
   "dependencies": {
     "prettier": "^3.8.1"

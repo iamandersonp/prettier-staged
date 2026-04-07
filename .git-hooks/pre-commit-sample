@@ -8,7 +8,7 @@ fi
 
 npm run prettier-staged
 
-STAGED_FILES=$(git diff --name-only --cached --diff-filter=ACM | grep -E '\.(html|ts|scss|css|json)$')
+STAGED_FILES=$(git diff --name-only --cached --diff-filter=ACM | grep -E '\.(html|ts|scss|css|json|js)$')
 
 if [ -n "$STAGED_FILES" ]; then
   echo "$STAGED_FILES" | xargs git add

@@ -1,6 +1,6 @@
 # @iamandersonp/prettier-staged
 
-An utitlty to auto format stagged files using prettier
+Configurable utility to auto-format staged files using Prettier with customizable file extensions and hooks directory
 
 ## Installation
 
@@ -24,23 +24,63 @@ Create a command on your package.json
 "prettier-staged": "prettier-staged",
 ```
 
+## File Extensions Configuration
+
+By default, prettier-staged formats these file types: `html`, `ts`, `scss`, `css`, `json`, `js`
+
+You can customize which file extensions to format by creating a `.env` file in your project root:
+
+```bash
+# .env
+EXTENSIONS=js,jsx,ts,tsx,css,scss
+```
+
+**Examples of custom configurations:**
+
+```bash
+# React project
+EXTENSIONS=js,jsx,ts,tsx,css,scss
+
+# Vue project
+EXTENSIONS=vue,js,ts,css,scss
+
+# TypeScript-only project
+EXTENSIONS=ts,tsx
+
+# Full-stack project
+EXTENSIONS=html,js,jsx,ts,tsx,vue,css,scss,less,json
+
+# With quotes and spaces (automatically cleaned)
+EXTENSIONS="js, jsx, ts, tsx"
+EXTENSIONS='vue, css, scss'
+```
+
+If no `.env` file exists or `EXTENSIONS` is not specified, the default extensions will be used.
+
 ## Automatic Hook Installation
 
 When installed as a dependency (not during local development), prettier-staged automatically copies a pre-commit hook to your project's hooks directory. This provides a ready-to-use solution for formatting staged files.
 
 ### Configuration
 
-You can configure the hooks directory using an optional `.env` file in your project root:
+You can configure the hooks directory and file extensions using an optional `.env` file in your project root:
 
 ```bash
 # .env (optional)
-HOOKS_DIR=.git-hooks    # Default value
-# or customize:
+HOOKS_DIR=.git-hooks                 # Default hooks directory
+EXTENSIONS=html,ts,scss,css,json,js  # Default file extensions
+
+# Customize as needed:
 HOOKS_DIR=custom-hooks
-HOOKS_DIR="my hooks"     # With spaces (quotes optional)
+HOOKS_DIR="my hooks"                 # With spaces (quotes optional)
+EXTENSIONS=js,jsx,ts,tsx             # Custom file extensions
+EXTENSIONS="vue,svelte,astro"        # Framework-specific files
 ```
 
-If no `.env` file exists, the default directory `.git-hooks` will be used.
+If no `.env` file exists, the default values will be used:
+
+- **HOOKS_DIR**: `.git-hooks`
+- **EXTENSIONS**: `html,ts,scss,css,json,js`
 
 #### Setting up your .env file
 
@@ -50,12 +90,19 @@ If no `.env` file exists, the default directory `.git-hooks` will be used.
    cp .env.example .env
    ```
 
-2. Edit `.env` to customize your hooks directory (optional):
+2. Edit `.env` to customize your configuration (optional):
 
    ```bash
+   # Hooks directory
    HOOKS_DIR=.git-hooks  # Use default
    # or
    HOOKS_DIR=git-hooks   # Custom directory
+
+   # File extensions to format
+   EXTENSIONS=html,ts,scss,css,json,js  # Use default
+   # or
+   EXTENSIONS=js,jsx,ts,tsx             # JavaScript/TypeScript only
+   EXTENSIONS=vue,svelte,astro          # Framework-specific
    ```
 
 ### What gets installed
@@ -93,14 +140,25 @@ git config core.hooksPath your-custom-directory
 
 ```bash
 # All these formats are valid:
+
+# Hooks directory:
 HOOKS_DIR=.git-hooks          # Basic format
 HOOKS_DIR=".git-hooks"        # With double quotes
 HOOKS_DIR='.git-hooks'        # With single quotes
 HOOKS_DIR=custom-hooks-dir    # Custom directory name
 HOOKS_DIR="hooks with spaces" # Directories with spaces
+
+# File extensions:
+EXTENSIONS=html,ts,scss,css,json,js  # Basic format
+EXTENSIONS="js,jsx,ts,tsx"           # With double quotes
+EXTENSIONS='vue,svelte,astro'        # With single quotes
+EXTENSIONS=js, ts, css, scss         # With spaces (auto-trimmed)
 ```
 
-**Note**: If the `.env` file doesn't exist or has errors, the default `.git-hooks` directory is used automatically.
+**Note**: If the `.env` file doesn't exist or has errors, the default values are used automatically:
+
+- **HOOKS_DIR**: `.git-hooks`
+- **EXTENSIONS**: `html,ts,scss,css,json,js`
 
 ### Custom implementation
 
@@ -117,7 +175,7 @@ fi
 
 npm run prettier-staged
 
-STAGED_FILES=$(git diff --name-only --cached --diff-filter=ACM | grep -E '\.(html|ts|scss|css|json)$')
+STAGED_FILES=$(git diff --name-only --cached --diff-filter=ACM | grep -E '\.(html|ts|scss|css|json|js)$')
 
 if [ -n "$STAGED_FILES" ]; then
   echo "$STAGED_FILES" | xargs git add
@@ -132,10 +190,16 @@ fi
    npm install -D @iamandersonp/prettier-staged
    ```
 
-2. **Optional: Configure hooks directory**:
+2. **Optional: Configure your preferences**:
 
    ```bash
+   # Create .env file with custom configuration
    echo "HOOKS_DIR=.git-hooks" > .env
+   echo "EXTENSIONS=html,ts,scss,css,json,js" >> .env
+
+   # Or copy and edit the example
+   cp .env.example .env
+   # Edit .env to customize HOOKS_DIR and EXTENSIONS
    ```
 
 3. **The hook is automatically set up!** No additional configuration needed.
@@ -172,5 +236,11 @@ Current test coverage: **>95%** including:
 - ✅ No files to format scenarios
 - ✅ Error handling (Prettier not found, syntax errors, general errors)
 - ✅ Edge cases (files with spaces, whitespace trimming, all supported extensions)
+- ✅ Extensions configuration from `.env` file (custom extensions, fallback to defaults, error handling)
+- ✅ Hooks directory configuration from `.env` file
 
 The tests use mocks to simulate Git commands and Prettier execution without running actual commands, making tests fast and reliable.
+
+## Changelog
+
+All history of changes are located on [CHANGELOG.md](./CHANGELOG.md).

@@ -1,11 +1,20 @@
 const { execSync } = require('node:child_process');
+const fs = require('node:fs');
 
-// Mock completo del módulo child_process
+// Mock de child_process
 jest.mock('node:child_process', () => ({
   execSync: jest.fn()
 }));
 
-const { runPrettierStaged } = require('../src/index.js');
+// Mock de node:fs
+jest.mock('node:fs');
+
+const {
+  runPrettierStaged,
+  getExtensionsFromEnv,
+  createExtensionsRegex,
+  DEFAULT_EXTENSIONS
+} = require('../src/index.js');
 
 describe('prettier-staged CLI', () => {
   let consoleSpy, errorSpy, exitSpy;
@@ -228,6 +237,128 @@ describe('prettier-staged CLI', () => {
       expect(execSync).toHaveBeenNthCalledWith(2, `npx prettier --write ${validFiles.join(' ')}`, {
         stdio: 'inherit'
       });
+    });
+  });
+
+  describe('getExtensionsFromEnv', () => {
+    beforeEach(() => {
+      // Reset fs mocks
+      fs.existsSync = jest.fn();
+      fs.readFileSync = jest.fn();
+      // Reset process.cwd
+      jest.spyOn(process, 'cwd').mockReturnValue('/test/project');
+    });
+
+    afterEach(() => {
+      process.cwd.mockRestore();
+    });
+
+    it('should return default extensions when .env file does not exist', () => {
+      fs.existsSync.mockReturnValue(false);
+
+      const result = getExtensionsFromEnv();
+
+      expect(result).toEqual(DEFAULT_EXTENSIONS);
+      expect(fs.existsSync).toHaveBeenCalledWith('/test/project/.env');
+    });
+
+    it('should return extensions from .env file when EXTENSIONS is set', () => {
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockReturnValue('NODE_ENV=test\nEXTENSIONS=js,jsx,ts,tsx\nOTHER=value');
+
+      const result = getExtensionsFromEnv();
+
+      expect(result).toEqual(['js', 'jsx', 'ts', 'tsx']);
+      expect(fs.readFileSync).toHaveBeenCalledWith('/test/project/.env', 'utf8');
+    });
+
+    it('should return default extensions when .env exists but EXTENSIONS is not set', () => {
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockReturnValue('NODE_ENV=test\nOTHER=value');
+
+      const result = getExtensionsFromEnv();
+
+      expect(result).toEqual(DEFAULT_EXTENSIONS);
+    });
+
+    it('should remove quotes and trim spaces from EXTENSIONS value', () => {
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockReturnValue('EXTENSIONS="html, ts , css, json"');
+
+      const result = getExtensionsFromEnv();
+
+      expect(result).toEqual(['html', 'ts', 'css', 'json']);
+    });
+
+    it('should remove single quotes from EXTENSIONS value', () => {
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockReturnValue("EXTENSIONS='vue,svelte,astro'");
+
+      const result = getExtensionsFromEnv();
+
+      expect(result).toEqual(['vue', 'svelte', 'astro']);
+    });
+
+    it('should handle file read errors gracefully', () => {
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockImplementation(() => {
+        throw new Error('Permission denied');
+      });
+
+      const result = getExtensionsFromEnv();
+
+      expect(result).toEqual(DEFAULT_EXTENSIONS);
+    });
+
+    it('should return default extensions when EXTENSIONS is empty', () => {
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockReturnValue('EXTENSIONS=\nOTHER=value');
+
+      const result = getExtensionsFromEnv();
+
+      expect(result).toEqual(DEFAULT_EXTENSIONS);
+    });
+
+    it('should filter out empty extensions after split', () => {
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockReturnValue('EXTENSIONS=js,,ts, ,jsx,');
+
+      const result = getExtensionsFromEnv();
+
+      expect(result).toEqual(['js', 'ts', 'jsx']);
+    });
+  });
+
+  describe('createExtensionsRegex', () => {
+    it('should create regex for single extension', () => {
+      const result = createExtensionsRegex(['js']);
+
+      expect(result).toEqual(/\.(js)$/);
+      expect(result.test('app.js')).toBe(true);
+      expect(result.test('app.ts')).toBe(false);
+    });
+
+    it('should create regex for multiple extensions', () => {
+      const result = createExtensionsRegex(['js', 'ts', 'jsx']);
+
+      expect(result).toEqual(/\.(js|ts|jsx)$/);
+      expect(result.test('app.js')).toBe(true);
+      expect(result.test('component.ts')).toBe(true);
+      expect(result.test('Component.jsx')).toBe(true);
+      expect(result.test('style.css')).toBe(false);
+    });
+
+    it('should create regex for default extensions', () => {
+      const result = createExtensionsRegex(DEFAULT_EXTENSIONS);
+
+      expect(result).toEqual(/\.(html|ts|scss|css|json|js)$/);
+      expect(result.test('index.html')).toBe(true);
+      expect(result.test('app.ts')).toBe(true);
+      expect(result.test('style.scss')).toBe(true);
+      expect(result.test('reset.css')).toBe(true);
+      expect(result.test('package.json')).toBe(true);
+      expect(result.test('script.js')).toBe(true);
+      expect(result.test('readme.md')).toBe(false);
     });
   });
 });
