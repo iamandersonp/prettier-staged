@@ -1,6 +1,6 @@
 {
-  "name": "preetier-staged",
-  "version": "0.1.1",
+  "name": "@iamandersonp/prettier-staged",
+  "version": "0.2.0",
   "main": "src/index.js",
   "bin": {
     "prettier-staged": "src/index.js"
@@ -26,9 +26,9 @@
   "author": "Anderson Penaloza <info@iamanderson.dev>",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/iamandersonp/preetier-staged.git"
+    "url": "git+https://github.com/iamandersonp/prettier-staged.git"
   },
-  "homepage": "https://github.com/iamandersonp/preetier-staged",
+  "homepage": "https://github.com/iamandersonp/prettier-staged.git",
   "license": "GPL-3.0-only",
   "description": "An utility to auto format staged files using Prettier",
   "readme": "README.md",

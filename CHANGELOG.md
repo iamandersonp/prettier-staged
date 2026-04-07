@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.2.0](https://github.com/iamandersonp/preetier-staged/compare/v0.1.1...v0.2.0) (2026-04-07)
+
+
+### Bug Fixes
+
+* :rocket: rename to prettier-staged for consistence ([d7ae9f4](https://github.com/iamandersonp/preetier-staged/commits/d7ae9f40006e0040ee5045f3f642a6f02c860db2))
+
 ### [0.1.1](https://github.com/iamandersonp/preetier-staged/compare/v0.1.0...v0.1.1) (2026-04-06)
 
 

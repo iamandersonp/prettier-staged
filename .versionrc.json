@@ -9,6 +9,6 @@
     { "type": "perf", "hidden": true },
     { "type": "test", "hidden": true }
   ],
-  "commitUrlFormat": "https://github.com/iamandersonp/preetier-staged/commits/{{hash}}",
-  "compareUrlFormat": "https://github.com/iamandersonp/preetier-staged/compare/{{previousTag}}...{{currentTag}}"
+  "commitUrlFormat": "https://github.com/iamandersonp/prettier-staged.git/commits/{{hash}}",
+  "compareUrlFormat": "https://github.com/iamandersonp/prettier-staged.git/compare/{{previousTag}}...{{currentTag}}"
 }
