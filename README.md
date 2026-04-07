@@ -84,7 +84,10 @@ If no `.env` file exists, the default values will be used:
 
 #### Setting up your .env file
 
-1. Copy the example configuration:
+**The easy way** (recommended):
+When you install prettier-staged, a `.env.example` file is automatically copied to your project root!
+
+1. Copy the example to create your configuration:
 
    ```bash
    cp .env.example .env
@@ -105,12 +108,22 @@ If no `.env` file exists, the default values will be used:
    EXTENSIONS=vue,svelte,astro          # Framework-specific
    ```
 
+**Manual setup** (if needed):
+If the `.env.example` file wasn't created automatically, you can create your own `.env` file with the configuration above.
+
 ### What gets installed
 
-- A `{HOOKS_DIR}/pre-commit` file that:
+When installed as a dependency, prettier-staged automatically copies:
+
+- **Pre-commit hook**: A `{HOOKS_DIR}/pre-commit` file that:
   - Skips formatting during merge conflicts
   - Formats staged files with Prettier
   - Re-stages formatted files automatically
+
+- **Configuration template**: A `.env.example` file in your project root with:
+  - Default `HOOKS_DIR` and `EXTENSIONS` settings
+  - Example configurations for different project types
+  - Ready-to-use template for customization
 
 ### How to use the copied hook
 
@@ -130,8 +143,9 @@ git config core.hooksPath your-custom-directory
 
 ### Hook behavior
 
-- ✅ **Safe**: Only copies if `{HOOKS_DIR}/pre-commit` doesn't exist (won't overwrite)
+- ✅ **Safe**: Only copies files if they don't exist (won't overwrite)
 - ✅ **Smart**: Only installs when added as a dependency, not during development
+- ✅ **Complete**: Copies both pre-commit hook AND configuration template
 - ✅ **Executable**: Automatically sets proper permissions (`chmod +x`)
 - ✅ **Configurable**: Hooks directory can be customized via `.env` file
 - ✅ **Auto-configured**: Git hooks path is set automatically during installation
@@ -213,14 +227,14 @@ fi
 
 2. **Optional: Configure your preferences**:
 
-   ```bash
-   # Create .env file with custom configuration
-   echo "HOOKS_DIR=.git-hooks" > .env
-   echo "EXTENSIONS=html,ts,scss,css,json,js" >> .env
+   A `.env.example` file is automatically copied to your project! Just:
 
-   # Or copy and edit the example
+   ```bash
+   # Copy the example configuration
    cp .env.example .env
-   # Edit .env to customize HOOKS_DIR and EXTENSIONS
+
+   # Edit .env to customize HOOKS_DIR and EXTENSIONS (optional)
+   # Defaults work great for most projects!
    ```
 
 3. **The hook is automatically set up!** No additional configuration needed.
@@ -230,6 +244,7 @@ fi
    ```bash
    git config core.hooksPath  # Should show your hooks directory
    ls -la .git-hooks/         # Should show the pre-commit hook
+   cat .env.example           # See available configuration options
    ```
 
 ## Testing

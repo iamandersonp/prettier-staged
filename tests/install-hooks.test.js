@@ -10,6 +10,7 @@ const {
   isExternalInstallation,
   getTargetProjectDir,
   copyPreCommitHook,
+  copyEnvExample,
   setupLibraryGitHooks,
   installHooks,
   getHooksDirFromEnv,
@@ -230,6 +231,69 @@ describe('install-hooks', () => {
     });
   });
 
+  describe('copyEnvExample', () => {
+    const targetDir = '/target/project';
+    const targetEnvExample = path.join(targetDir, '.env.example');
+
+    beforeEach(() => {
+      process.env.INIT_CWD = targetDir;
+    });
+
+    it('should skip copy if .env.example already exists', () => {
+      fs.existsSync.mockReturnValue(true);
+
+      copyEnvExample();
+
+      expect(fs.copyFileSync).not.toHaveBeenCalled();
+      expect(consoleSpy).toHaveBeenCalledWith('✅ .env.example already exists, skipping copy');
+    });
+
+    it('should warn if source .env.example does not exist', () => {
+      fs.existsSync.mockImplementation((filePath) => {
+        if (filePath === targetEnvExample) return false;
+        if (filePath.includes('.env.example')) return false;
+        return true;
+      });
+
+      copyEnvExample();
+
+      expect(fs.copyFileSync).not.toHaveBeenCalled();
+      expect(warnSpy).toHaveBeenCalledWith('⚠️ Source .env.example not found, skipping copy');
+    });
+
+    it('should copy .env.example when conditions are met', () => {
+      // Mock file existence checks
+      fs.existsSync.mockImplementation((filePath) => {
+        if (filePath === targetEnvExample) return false; // Target doesn't exist
+        if (filePath.includes('.env.example')) return true; // Source exists
+        return false;
+      });
+
+      copyEnvExample();
+
+      expect(fs.copyFileSync).toHaveBeenCalled();
+      expect(consoleSpy).toHaveBeenCalledWith('✅ Copied .env.example to project root');
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '💡 Configure your environment by copying .env.example to .env'
+      );
+    });
+
+    it('should handle copy errors gracefully', () => {
+      fs.existsSync.mockImplementation((filePath) => {
+        if (filePath === targetEnvExample) return false;
+        if (filePath.includes('.env.example')) return true;
+        return false;
+      });
+      fs.copyFileSync.mockImplementation(() => {
+        throw new Error('Permission denied');
+      });
+
+      copyEnvExample();
+
+      expect(warnSpy).toHaveBeenCalledWith('⚠️ Failed to copy .env.example:', 'Permission denied');
+    });
+  });
+
   describe('setupLibraryGitHooks', () => {
     it('should configure git hooks successfully', () => {
       execSync.mockImplementation(() => {});
@@ -270,7 +334,9 @@ describe('install-hooks', () => {
       installHooks();
 
       expect(consoleSpy).toHaveBeenCalledWith('🔧 Setting up prettier-staged hooks...');
-      expect(consoleSpy).toHaveBeenCalledWith('🏠 Running in development mode, skipping hook copy');
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '🏠 Running in development mode, skipping file copies'
+      );
       expect(consoleSpy).toHaveBeenCalledWith('✨ Setup complete!');
     });
 
@@ -280,15 +346,15 @@ describe('install-hooks', () => {
       // Mock successful operations
       execSync.mockImplementation(() => {});
       fs.existsSync.mockImplementation((filePath) => {
-        return !!filePath.includes('.git-hooks/pre-commit-sample'); // Target doesn't exist
+        if (filePath.includes('.git-hooks/pre-commit-sample')) return true; // Source hook exists
+        if (filePath.includes('.env.example')) return true; // Source .env.example exists
+        return false; // Targets don't exist
       });
 
       installHooks();
 
       expect(consoleSpy).toHaveBeenCalledWith('🔧 Setting up prettier-staged hooks...');
-      expect(consoleSpy).toHaveBeenCalledWith(
-        '📦 Installing as dependency, copying pre-commit hook...'
-      );
+      expect(consoleSpy).toHaveBeenCalledWith('📦 Installing as dependency, copying files...');
       expect(consoleSpy).toHaveBeenCalledWith('✨ Setup complete!');
     });
   });

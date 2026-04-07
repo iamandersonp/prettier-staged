@@ -108,6 +108,40 @@ function copyPreCommitHook() {
 }
 
 /**
+ * Copies the .env.example file to the target project's root directory
+ * if it doesn't already exist
+ */
+function copyEnvExample() {
+  try {
+    const targetProjectDir = getTargetProjectDir();
+    const targetEnvExamplePath = path.join(targetProjectDir, '.env.example');
+
+    // Check if .env.example already exists
+    if (fs.existsSync(targetEnvExamplePath)) {
+      console.log('✅ .env.example already exists, skipping copy');
+      return;
+    }
+
+    // Get source .env.example path
+    const sourceEnvExamplePath = path.join(__dirname, '..', '.env.example');
+
+    if (!fs.existsSync(sourceEnvExamplePath)) {
+      console.warn('⚠️ Source .env.example not found, skipping copy');
+      return;
+    }
+
+    // Copy the file
+    fs.copyFileSync(sourceEnvExamplePath, targetEnvExamplePath);
+
+    console.log('✅ Copied .env.example to project root');
+    console.log('💡 Configure your environment by copying .env.example to .env');
+  } catch (error) {
+    // Don't fail installation if .env.example copy fails
+    console.warn('⚠️ Failed to copy .env.example:', error.message);
+  }
+}
+
+/**
  * Sets up git hooks in the library's own .git-hooks directory
  * (existing functionality)
  */
@@ -139,10 +173,11 @@ function installHooks() {
 
   // Only copy to target project if this is an external installation
   if (isExternalInstallation()) {
-    console.log('📦 Installing as dependency, copying pre-commit hook...');
+    console.log('📦 Installing as dependency, copying files...');
     copyPreCommitHook();
+    copyEnvExample();
   } else {
-    console.log('🏠 Running in development mode, skipping hook copy');
+    console.log('🏠 Running in development mode, skipping file copies');
   }
 
   console.log('✨ Setup complete!');
@@ -153,6 +188,7 @@ module.exports = {
   isExternalInstallation,
   getTargetProjectDir,
   copyPreCommitHook,
+  copyEnvExample,
   setupLibraryGitHooks,
   installHooks,
   getHooksDirFromEnv,
