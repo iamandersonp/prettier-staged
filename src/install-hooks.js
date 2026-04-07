@@ -129,16 +129,26 @@ function copyPreCommitHook() {
 
 /**
  * Copies the .env.example file to the target project's root directory
- * if it doesn't already exist
+ * if it doesn't already exist, and renames it to .env if .env doesn't exist
  */
 function copyEnvExample() {
   try {
     const targetProjectDir = getTargetProjectDir();
     const targetEnvExamplePath = path.join(targetProjectDir, '.env.example');
+    const targetEnvPath = path.join(targetProjectDir, '.env');
 
     // Check if .env.example already exists
     if (fs.existsSync(targetEnvExamplePath)) {
       console.log('✅ .env.example already exists, skipping copy');
+
+      // Even if .env.example exists, check if we should rename it to .env
+      if (fs.existsSync(targetEnvPath)) {
+        console.log('💡 .env already exists, keeping both files');
+      } else {
+        fs.renameSync(targetEnvExamplePath, targetEnvPath);
+        console.log('✅ Renamed .env.example to .env');
+        console.log('💡 Environment configuration is ready to use');
+      }
       return;
     }
 
@@ -152,9 +162,18 @@ function copyEnvExample() {
 
     // Copy the file
     fs.copyFileSync(sourceEnvExamplePath, targetEnvExamplePath);
-
     console.log('✅ Copied .env.example to project root');
-    console.log('💡 Configure your environment by copying .env.example to .env');
+
+    // Check if .env already exists before renaming
+    if (fs.existsSync(targetEnvPath)) {
+      console.log('💡 .env already exists, keeping .env.example as backup');
+      console.log('💡 You can configure your environment by editing the existing .env file');
+    } else {
+      // Rename .env.example to .env
+      fs.renameSync(targetEnvExamplePath, targetEnvPath);
+      console.log('✅ Renamed .env.example to .env');
+      console.log('💡 Environment configuration is ready to use');
+    }
   } catch (error) {
     // Don't fail installation if .env.example copy fails
     console.warn('⚠️ Failed to copy .env.example:', error.message);
@@ -232,9 +251,6 @@ function setupLibraryGitHooks() {
 function installHooks() {
   console.log('🔧 Setting up prettier-staged hooks...');
 
-  // Always setup hooks for the library itself
-  setupLibraryGitHooks();
-
   // Only copy to target project if this is an external installation
   if (isExternalInstallation()) {
     const targetProjectDir = getTargetProjectDir();
@@ -250,6 +266,8 @@ function installHooks() {
   } else {
     console.log('🏠 Running in development mode, skipping file copies');
   }
+  // Always setup hooks
+  setupLibraryGitHooks();
 
   console.log('✨ Setup complete!');
 }

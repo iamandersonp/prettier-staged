@@ -33,6 +33,7 @@ describe('install-hooks', () => {
     fs.chmodSync = jest.fn();
     fs.readFileSync = jest.fn();
     fs.writeFileSync = jest.fn();
+    fs.renameSync = jest.fn();
 
     // Setup child_process mocks explicitly
     execSync.mockReset();
@@ -317,6 +318,7 @@ describe('install-hooks', () => {
   describe('copyEnvExample', () => {
     const targetDir = '/target/project';
     const targetEnvExample = path.join(targetDir, '.env.example');
+    const targetEnv = path.join(targetDir, '.env');
     let originalCwd;
 
     beforeEach(() => {
@@ -333,32 +335,57 @@ describe('install-hooks', () => {
       }
     });
 
-    it('should skip copy if .env.example already exists', () => {
-      fs.existsSync.mockReturnValue(true);
-
-      copyEnvExample();
-
-      expect(fs.copyFileSync).not.toHaveBeenCalled();
-      expect(consoleSpy).toHaveBeenCalledWith('✅ .env.example already exists, skipping copy');
-    });
-
-    it('should warn if source .env.example does not exist', () => {
+    it('should skip copy if .env.example already exists and .env exists (keep both)', () => {
       fs.existsSync.mockImplementation((filePath) => {
-        if (filePath === targetEnvExample) return false;
-        if (filePath.includes('.env.example')) return false;
-        return true;
+        if (filePath === targetEnvExample) return true; // .env.example exists
+        if (filePath === targetEnv) return true; // .env also exists
+        return false;
       });
 
       copyEnvExample();
 
       expect(fs.copyFileSync).not.toHaveBeenCalled();
+      expect(fs.renameSync).not.toHaveBeenCalled();
+      expect(consoleSpy).toHaveBeenCalledWith('✅ .env.example already exists, skipping copy');
+      expect(consoleSpy).toHaveBeenCalledWith('💡 .env already exists, keeping both files');
+    });
+
+    it('should rename .env.example to .env when .env.example exists but .env does not', () => {
+      fs.existsSync.mockImplementation((filePath) => {
+        if (filePath === targetEnvExample) return true; // .env.example exists
+        if (filePath === targetEnv) return false; // .env does not exist
+        return false;
+      });
+
+      copyEnvExample();
+
+      expect(fs.copyFileSync).not.toHaveBeenCalled();
+      expect(fs.renameSync).toHaveBeenCalledWith(targetEnvExample, targetEnv);
+      expect(consoleSpy).toHaveBeenCalledWith('✅ .env.example already exists, skipping copy');
+      expect(consoleSpy).toHaveBeenCalledWith('✅ Renamed .env.example to .env');
+      expect(consoleSpy).toHaveBeenCalledWith('💡 Environment configuration is ready to use');
+    });
+
+    it('should warn if source .env.example does not exist', () => {
+      fs.existsSync.mockImplementation((filePath) => {
+        if (filePath === targetEnvExample) return false;
+        if (filePath === targetEnv) return false;
+        if (filePath.includes('.env.example')) return false; // Source doesn't exist
+        return true; // Default case for other paths
+      });
+
+      copyEnvExample();
+
+      expect(fs.copyFileSync).not.toHaveBeenCalled();
+      expect(fs.renameSync).not.toHaveBeenCalled();
       expect(warnSpy).toHaveBeenCalledWith('⚠️ Source .env.example not found, skipping copy');
     });
 
-    it('should copy .env.example when conditions are met', () => {
+    it('should copy .env.example and rename to .env when .env does not exist', () => {
       // Mock file existence checks
       fs.existsSync.mockImplementation((filePath) => {
-        if (filePath === targetEnvExample) return false; // Target doesn't exist
+        if (filePath === targetEnvExample) return false; // Target doesn't exist initially
+        if (filePath === targetEnv) return false; // .env doesn't exist
         if (filePath.includes('.env.example')) return true; // Source exists
         return false;
       });
@@ -366,16 +393,39 @@ describe('install-hooks', () => {
       copyEnvExample();
 
       expect(fs.copyFileSync).toHaveBeenCalled();
+      expect(fs.renameSync).toHaveBeenCalledWith(targetEnvExample, targetEnv);
+      expect(consoleSpy).toHaveBeenCalledWith('✅ Copied .env.example to project root');
+      expect(consoleSpy).toHaveBeenCalledWith('✅ Renamed .env.example to .env');
+      expect(consoleSpy).toHaveBeenCalledWith('💡 Environment configuration is ready to use');
+    });
+
+    it('should copy .env.example but keep it as backup when .env already exists', () => {
+      // Mock file existence checks
+      fs.existsSync.mockImplementation((filePath) => {
+        if (filePath === targetEnvExample) return false; // Target doesn't exist initially
+        if (filePath === targetEnv) return true; // .env already exists
+        if (filePath.includes('.env.example')) return true; // Source exists
+        return false;
+      });
+
+      copyEnvExample();
+
+      expect(fs.copyFileSync).toHaveBeenCalled();
+      expect(fs.renameSync).not.toHaveBeenCalled();
       expect(consoleSpy).toHaveBeenCalledWith('✅ Copied .env.example to project root');
       expect(consoleSpy).toHaveBeenCalledWith(
-        '💡 Configure your environment by copying .env.example to .env'
+        '💡 .env already exists, keeping .env.example as backup'
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '💡 You can configure your environment by editing the existing .env file'
       );
     });
 
     it('should handle copy errors gracefully', () => {
       fs.existsSync.mockImplementation((filePath) => {
         if (filePath === targetEnvExample) return false;
-        if (filePath.includes('.env.example')) return true;
+        if (filePath === targetEnv) return false;
+        if (filePath.includes('.env.example')) return true; // Source exists
         return false;
       });
       fs.copyFileSync.mockImplementation(() => {
@@ -384,7 +434,28 @@ describe('install-hooks', () => {
 
       copyEnvExample();
 
+      expect(fs.renameSync).not.toHaveBeenCalled();
       expect(warnSpy).toHaveBeenCalledWith('⚠️ Failed to copy .env.example:', 'Permission denied');
+    });
+
+    it('should handle rename errors gracefully', () => {
+      fs.existsSync.mockImplementation((filePath) => {
+        if (filePath === targetEnvExample) return false;
+        if (filePath === targetEnv) return false;
+        if (filePath.includes('.env.example')) return true; // Source exists
+        return false;
+      });
+      fs.renameSync.mockImplementation(() => {
+        throw new Error('Permission denied for rename');
+      });
+
+      copyEnvExample();
+
+      expect(fs.copyFileSync).toHaveBeenCalled();
+      expect(warnSpy).toHaveBeenCalledWith(
+        '⚠️ Failed to copy .env.example:',
+        'Permission denied for rename'
+      );
     });
   });
 
@@ -587,7 +658,8 @@ describe('install-hooks', () => {
         if (filePath === '/different/project/package.json') return true; // Exact match for target package.json
         if (filePath.includes('.git-hooks/pre-commit-sample')) return true; // Source hook exists
         if (filePath.includes('.env.example')) return true; // Source .env.example exists
-        return false; // Targets don't exist
+        if (filePath === '/different/project/.env') return false; // .env doesn't exist (will be renamed)
+        return false; // Other targets don't exist
       });
       fs.readFileSync.mockImplementation((filePath) => {
         if (filePath === '/different/project/package.json') {
@@ -617,6 +689,7 @@ describe('install-hooks', () => {
         if (filePath === '/different/project/package.json') return false; // No package.json in target
         if (filePath.includes('.git-hooks/pre-commit-sample')) return true; // Source hook exists
         if (filePath.includes('.env.example')) return true; // Source .env.example exists
+        if (filePath === '/different/project/.env') return false; // .env doesn't exist
         return false;
       });
 
