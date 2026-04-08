@@ -11,6 +11,7 @@ const {
   getTargetProjectDir,
   copyPreCommitHook,
   copyEnvExample,
+  ensureEnvVariables,
   addScriptToPackageJson,
   setupLibraryGitHooks,
   installHooks,
@@ -342,6 +343,9 @@ describe('install-hooks', () => {
         return false;
       });
 
+      // Mock .env file content with existing variables
+      fs.readFileSync.mockReturnValue('HOOKS_DIR=.git-hooks\nEXTENSIONS=html,js,ts\n');
+
       copyEnvExample();
 
       expect(fs.copyFileSync).not.toHaveBeenCalled();
@@ -408,6 +412,9 @@ describe('install-hooks', () => {
         return false;
       });
 
+      // Mock .env file content with missing variables
+      fs.readFileSync.mockReturnValue('NODE_ENV=development\n');
+
       copyEnvExample();
 
       expect(fs.copyFileSync).toHaveBeenCalled();
@@ -456,6 +463,156 @@ describe('install-hooks', () => {
         '⚠️ Failed to copy .env.example:',
         'Permission denied for rename'
       );
+    });
+  });
+
+  describe('ensureEnvVariables', () => {
+    const envPath = '/test/project/.env';
+
+    beforeEach(() => {
+      fs.existsSync.mockReturnValue(true);
+    });
+
+    it('should skip if .env file does not exist', () => {
+      fs.existsSync.mockReturnValue(false);
+
+      ensureEnvVariables(envPath);
+
+      expect(fs.readFileSync).not.toHaveBeenCalled();
+      expect(fs.writeFileSync).not.toHaveBeenCalled();
+    });
+
+    it('should not modify .env if all required variables exist', () => {
+      const envContent = 'NODE_ENV=development\nHOOKS_DIR=.git-hooks\nEXTENSIONS=html,js,ts\n';
+      fs.readFileSync.mockReturnValue(envContent);
+
+      ensureEnvVariables(envPath);
+
+      expect(fs.writeFileSync).not.toHaveBeenCalled();
+    });
+
+    it('should add missing HOOKS_DIR variable', () => {
+      const envContent = 'NODE_ENV=development\nEXTENSIONS=html,js,ts\n';
+      fs.readFileSync.mockReturnValue(envContent);
+
+      ensureEnvVariables(envPath);
+
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        envPath,
+        'NODE_ENV=development\nEXTENSIONS=html,js,ts\n\n# Configuración del directorio de hooks de Git\nHOOKS_DIR=.git-hooks\n',
+        'utf8'
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '✅ Added missing environment variables to .env: HOOKS_DIR'
+      );
+    });
+
+    it('should add missing EXTENSIONS variable', () => {
+      const envContent = 'NODE_ENV=development\nHOOKS_DIR=.git-hooks\n';
+      fs.readFileSync.mockReturnValue(envContent);
+
+      ensureEnvVariables(envPath);
+
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        envPath,
+        'NODE_ENV=development\nHOOKS_DIR=.git-hooks\n\n# Configuración de extensiones de archivos para formateo con Prettier\nEXTENSIONS=html,js,ts,scss,css,json\n',
+        'utf8'
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '✅ Added missing environment variables to .env: EXTENSIONS'
+      );
+    });
+
+    it('should add both missing variables', () => {
+      const envContent = 'NODE_ENV=development\nOTHER_VAR=value\n';
+      fs.readFileSync.mockReturnValue(envContent);
+
+      ensureEnvVariables(envPath);
+
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        envPath,
+        'NODE_ENV=development\nOTHER_VAR=value\n\n# Configuración del directorio de hooks de Git\nHOOKS_DIR=.git-hooks\n\n# Configuración de extensiones de archivos para formateo con Prettier\nEXTENSIONS=html,js,ts,scss,css,json\n',
+        'utf8'
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '✅ Added missing environment variables to .env: HOOKS_DIR, EXTENSIONS'
+      );
+    });
+
+    it('should handle empty .env file', () => {
+      const envContent = '';
+      fs.readFileSync.mockReturnValue(envContent);
+
+      ensureEnvVariables(envPath);
+
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        envPath,
+        '\n\n# Configuración del directorio de hooks de Git\nHOOKS_DIR=.git-hooks\n\n# Configuración de extensiones de archivos para formateo con Prettier\nEXTENSIONS=html,js,ts,scss,css,json\n',
+        'utf8'
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '✅ Added missing environment variables to .env: HOOKS_DIR, EXTENSIONS'
+      );
+    });
+
+    it('should handle .env file with only whitespace', () => {
+      const envContent = '   \n\n   \n';
+      fs.readFileSync.mockReturnValue(envContent);
+
+      ensureEnvVariables(envPath);
+
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        envPath,
+        '\n\n# Configuración del directorio de hooks de Git\nHOOKS_DIR=.git-hooks\n\n# Configuración de extensiones de archivos para formateo con Prettier\nEXTENSIONS=html,js,ts,scss,css,json\n',
+        'utf8'
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '✅ Added missing environment variables to .env: HOOKS_DIR, EXTENSIONS'
+      );
+    });
+
+    it('should recognize variables with different spacing', () => {
+      const envContent = '  HOOKS_DIR  =  .git-hooks  \n   EXTENSIONS=html,js  \n';
+      fs.readFileSync.mockReturnValue(envContent);
+
+      ensureEnvVariables(envPath);
+
+      expect(fs.writeFileSync).not.toHaveBeenCalled();
+    });
+
+    it('should recognize variables with comments and whitespace', () => {
+      const envContent = '# Comment\nHOOKS_DIR=.git-hooks\n# Another comment\nEXTENSIONS=js,ts\n';
+      fs.readFileSync.mockReturnValue(envContent);
+
+      ensureEnvVariables(envPath);
+
+      expect(fs.writeFileSync).not.toHaveBeenCalled();
+    });
+
+    it('should handle file read errors gracefully', () => {
+      fs.readFileSync.mockImplementation(() => {
+        throw new Error('Permission denied');
+      });
+
+      ensureEnvVariables(envPath);
+
+      expect(fs.writeFileSync).not.toHaveBeenCalled();
+      expect(warnSpy).toHaveBeenCalledWith(
+        '⚠️ Failed to ensure .env variables:',
+        'Permission denied'
+      );
+    });
+
+    it('should handle file write errors gracefully', () => {
+      const envContent = 'NODE_ENV=development\n';
+      fs.readFileSync.mockReturnValue(envContent);
+      fs.writeFileSync.mockImplementation(() => {
+        throw new Error('Disk full');
+      });
+
+      ensureEnvVariables(envPath);
+
+      expect(warnSpy).toHaveBeenCalledWith('⚠️ Failed to ensure .env variables:', 'Disk full');
     });
   });
 

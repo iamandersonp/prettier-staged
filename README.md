@@ -104,7 +104,29 @@ When you install prettier-staged, a `.env` file is automatically created from th
 
 - Copies `.env.example` template to your project
 - Renames it to `.env` for immediate use
+- **Smart .env handling**: If `.env` already exists, automatically adds any missing variables (HOOKS_DIR, EXTENSIONS)
 - Preserves existing `.env` files (creates `.env.example` as backup if `.env` already exists)
+- **Flexible detection**: Recognizes variables with various formats (with/without spaces, quotes, etc.)
+
+**Examples of variable formats automatically detected:**
+
+```bash
+# All these formats are recognized and preserved:
+HOOKS_DIR=.git-hooks          # Standard format
+HOOKS_DIR = .git-hooks        # With spaces
+  HOOKS_DIR  =  .git-hooks     # Extra whitespace
+HOOKS_DIR=".git-hooks"        # With quotes
+EXTENSIONS=js,ts,css          # Standard format
+  EXTENSIONS = "js, ts, css"   # Flexible spacing
+```
+
+**Intelligent .env management:**
+
+- ✅ **New projects**: Creates complete `.env` from template
+- ✅ **Existing .env**: Analyzes and adds only missing variables
+- ✅ **Preserves customizations**: Never overwrites existing variable values
+- ✅ **Smart detection**: Handles various spacing and quote formats
+- ✅ **Non-destructive**: Maintains your existing configuration
 
 **Optional customization:**
 Edit `.env` to customize your configuration if needed:
@@ -134,11 +156,13 @@ When installed as a dependency, prettier-staged automatically:
   - Formats staged files with Prettier
   - Re-stages formatted files automatically
 
-- **Configuration file**: Automatically creates a `.env` file with:
-  - Default `HOOKS_DIR` and `EXTENSIONS` settings
+- **Configuration file**: Automatically creates or updates a `.env` file with:
+  - **Smart analysis**: Checks existing `.env` files for missing variables
+  - **Auto-completion**: Adds `HOOKS_DIR=.git-hooks` and `EXTENSIONS=html,js,ts,scss,css,json` if missing
+  - **Preserves customizations**: Never overwrites existing variable values
+  - **Flexible format support**: Detects variables with various spacing and quote formats
   - Ready-to-use configuration for immediate use
-  - Smart handling: preserves existing `.env`, creates `.env.example` backup if needed
-  - No manual copying required!
+  - Safe handling: creates `.env.example` backup when needed
 
 - **NPM script**: Adds `"prettier-staged": "prettier-staged"` to your `package.json` scripts:
   - Safe operation - won't overwrite existing scripts
@@ -147,9 +171,12 @@ When installed as a dependency, prettier-staged automatically:
 
 #### Automatic .env handling
 
-- ✅ **New project**: Creates `.env` from template → Ready to use immediately
-- ✅ **Existing .env**: Preserves your `.env` + creates `.env.example` backup
-- ✅ **Safe operation**: Never overwrites existing configuration
+- ✅ **New project**: Creates complete `.env` from template → Ready to use immediately
+- ✅ **Existing .env**: Intelligently analyzes and adds missing variables (HOOKS_DIR, EXTENSIONS)
+- ✅ **Preserves settings**: Never overwrites your existing variable values
+- ✅ **Format flexible**: Detects variables with spaces, quotes, and various formatting
+- ✅ **Safe operation**: Creates `.env.example` backup when needed
+- ✅ **Zero setup**: Works out-of-the-box for both new and existing projects
 
 ### How to use the copied hook
 
@@ -181,21 +208,31 @@ git config core.hooksPath your-custom-directory
 ### Supported formats in .env
 
 ```bash
-# All these formats are valid:
+# All these formats are automatically detected and supported:
 
 # Hooks directory:
 HOOKS_DIR=.git-hooks          # Basic format
 HOOKS_DIR=".git-hooks"        # With double quotes
 HOOKS_DIR='.git-hooks'        # With single quotes
+HOOKS_DIR = .git-hooks        # With spaces around equals
+  HOOKS_DIR  =  .git-hooks    # With extra whitespace
 HOOKS_DIR=custom-hooks-dir    # Custom directory name
 HOOKS_DIR="hooks with spaces" # Directories with spaces
 
 # File extensions:
-EXTENSIONS=html,ts,scss,css,json,js  # Basic format
+EXTENSIONS=html,js,ts,scss,css,json  # Basic format
 EXTENSIONS="js,jsx,ts,tsx"           # With double quotes
 EXTENSIONS='vue,svelte,astro'        # With single quotes
-EXTENSIONS=js, ts, css, scss         # With spaces (auto-trimmed)
+EXTENSIONS = js, ts, css, scss       # With spaces (auto-trimmed)
+  EXTENSIONS  =  "js, ts, css"       # Extra whitespace and quotes
 ```
+
+**Smart detection features:**
+
+- 🔍 **Flexible parsing**: Detects variables regardless of spacing or quote style
+- 🛡️ **Error resilient**: Falls back to defaults if format is invalid
+- 🔄 **Auto-completion**: Adds missing variables to existing `.env` files
+- ✨ **Format preservation**: Maintains your existing style when adding variables
 
 **Note**: If the `.env` file doesn't exist or has errors, the default values are used automatically:
 

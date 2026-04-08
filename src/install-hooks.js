@@ -128,6 +128,71 @@ function copyPreCommitHook() {
 }
 
 /**
+ * Checks if required environment variables exist in .env file and adds them if missing
+ */
+function ensureEnvVariables(envPath) {
+  try {
+    if (!fs.existsSync(envPath)) {
+      return;
+    }
+
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    const lines = envContent.split('\n');
+
+    // Check which variables exist
+    const hasHooksDir = lines.some((line) => {
+      const trimmed = line.trim();
+      return (
+        trimmed.startsWith('HOOKS_DIR=') ||
+        trimmed.startsWith('HOOKS_DIR ') ||
+        trimmed.includes('HOOKS_DIR=')
+      );
+    });
+    const hasExtensions = lines.some((line) => {
+      const trimmed = line.trim();
+      return (
+        trimmed.startsWith('EXTENSIONS=') ||
+        trimmed.startsWith('EXTENSIONS ') ||
+        trimmed.includes('EXTENSIONS=')
+      );
+    });
+
+    // Variables to add with default values
+    const variablesToAdd = [];
+
+    if (!hasHooksDir) {
+      variablesToAdd.push(
+        '',
+        '# Configuración del directorio de hooks de Git',
+        'HOOKS_DIR=.git-hooks'
+      );
+    }
+
+    if (!hasExtensions) {
+      variablesToAdd.push(
+        '',
+        '# Configuración de extensiones de archivos para formateo con Prettier',
+        'EXTENSIONS=html,js,ts,scss,css,json'
+      );
+    }
+
+    // If we need to add variables, append them to the file
+    if (variablesToAdd.length > 0) {
+      const updatedContent = envContent.trimEnd() + '\n' + variablesToAdd.join('\n') + '\n';
+      fs.writeFileSync(envPath, updatedContent, 'utf8');
+
+      const addedVars = [];
+      if (!hasHooksDir) addedVars.push('HOOKS_DIR');
+      if (!hasExtensions) addedVars.push('EXTENSIONS');
+
+      console.log(`✅ Added missing environment variables to .env: ${addedVars.join(', ')}`);
+    }
+  } catch (error) {
+    console.warn('⚠️ Failed to ensure .env variables:', error.message);
+  }
+}
+
+/**
  * Copies the .env.example file to the target project's root directory
  * if it doesn't already exist, and renames it to .env if .env doesn't exist
  */
@@ -144,6 +209,8 @@ function copyEnvExample() {
       // Even if .env.example exists, check if we should rename it to .env
       if (fs.existsSync(targetEnvPath)) {
         console.log('💡 .env already exists, keeping both files');
+        // Check and add missing variables to existing .env
+        ensureEnvVariables(targetEnvPath);
       } else {
         fs.renameSync(targetEnvExamplePath, targetEnvPath);
         console.log('✅ Renamed .env.example to .env');
@@ -168,6 +235,8 @@ function copyEnvExample() {
     if (fs.existsSync(targetEnvPath)) {
       console.log('💡 .env already exists, keeping .env.example as backup');
       console.log('💡 You can configure your environment by editing the existing .env file');
+      // Check and add missing variables to existing .env
+      ensureEnvVariables(targetEnvPath);
     } else {
       // Rename .env.example to .env
       fs.renameSync(targetEnvExamplePath, targetEnvPath);
@@ -278,6 +347,7 @@ module.exports = {
   getTargetProjectDir,
   copyPreCommitHook,
   copyEnvExample,
+  ensureEnvVariables,
   addScriptToPackageJson,
   setupLibraryGitHooks,
   installHooks,
