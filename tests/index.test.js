@@ -17,7 +17,7 @@ const {
 } = require('../src/index.js');
 
 describe('prettier-staged CLI', () => {
-  let consoleSpy, errorSpy, exitSpy;
+  let consoleSpy, errorSpy, warnSpy, exitSpy;
 
   beforeEach(() => {
     // Reset all mocks
@@ -26,6 +26,7 @@ describe('prettier-staged CLI', () => {
     // Setup console spies
     consoleSpy = jest.spyOn(console, 'log').mockImplementation();
     errorSpy = jest.spyOn(console, 'error').mockImplementation();
+    warnSpy = jest.spyOn(console, 'warn').mockImplementation();
     exitSpy = jest.spyOn(process, 'exit').mockImplementation();
   });
 
@@ -33,6 +34,7 @@ describe('prettier-staged CLI', () => {
     // Restore all spies
     consoleSpy.mockRestore();
     errorSpy.mockRestore();
+    warnSpy.mockRestore();
     exitSpy.mockRestore();
   });
 
@@ -308,6 +310,10 @@ describe('prettier-staged CLI', () => {
       const result = getExtensionsFromEnv();
 
       expect(result).toEqual(DEFAULT_EXTENSIONS);
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Warning: Could not read .env file, using default EXTENSIONS:',
+        'Permission denied'
+      );
     });
 
     it('should return default extensions when EXTENSIONS is empty', () => {

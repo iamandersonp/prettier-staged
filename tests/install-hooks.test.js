@@ -13,6 +13,7 @@ const {
   copyEnvExample,
   ensureEnvVariables,
   addScriptToPackageJson,
+  isGitRepository,
   setupLibraryGitHooks,
   installHooks,
   getHooksDirFromEnv,
@@ -760,12 +761,68 @@ describe('install-hooks', () => {
     });
   });
 
+  describe('isGitRepository', () => {
+    it('should return true when in a git repository', () => {
+      execSync.mockImplementation(() => {
+        // Simula comando exitoso
+      });
+
+      const result = isGitRepository();
+
+      expect(result).toBe(true);
+      expect(execSync).toHaveBeenCalledWith('git rev-parse --git-dir', { stdio: 'ignore' });
+    });
+
+    it('should return false when not in a git repository', () => {
+      execSync.mockImplementation(() => {
+        throw new Error('Not a git repository');
+      });
+
+      const result = isGitRepository();
+
+      expect(result).toBe(false);
+    });
+
+    it('should return false when git command fails for any reason', () => {
+      execSync.mockImplementation(() => {
+        throw new Error('Git not found');
+      });
+
+      const result = isGitRepository();
+
+      expect(result).toBe(false);
+    });
+  });
+
   describe('setupLibraryGitHooks', () => {
-    it('should configure git hooks successfully', () => {
-      execSync.mockImplementation(() => {});
+    it('should skip setup when not in a git repository', () => {
+      execSync.mockImplementation((cmd) => {
+        if (cmd === 'git rev-parse --git-dir') {
+          throw new Error('Not a git repository');
+        }
+      });
 
       setupLibraryGitHooks();
 
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'ℹ️ Not in a git repository, skipping git hooks configuration'
+      );
+      // Should not call any git config commands
+      expect(execSync).toHaveBeenCalledTimes(1); // Only the git rev-parse check
+    });
+
+    it('should configure git hooks successfully when in git repository', () => {
+      execSync.mockImplementation((cmd) => {
+        if (cmd === 'git rev-parse --git-dir') {
+          // Simula que estamos en un repo git
+          return;
+        }
+        // Simula otros comandos git exitosos
+      });
+
+      setupLibraryGitHooks();
+
+      expect(execSync).toHaveBeenCalledWith('git rev-parse --git-dir', { stdio: 'ignore' });
       expect(execSync).toHaveBeenCalledWith(`git config core.hooksPath ${HOOKS_DIR}`, {
         stdio: 'ignore'
       });
@@ -774,10 +831,14 @@ describe('install-hooks', () => {
       expect(consoleSpy).toHaveBeenCalledWith('✅ Made git hooks executable');
     });
 
-    it('should handle git configuration errors gracefully', () => {
+    it('should handle git configuration errors gracefully when in git repository', () => {
       execSync.mockImplementation((cmd) => {
+        if (cmd === 'git rev-parse --git-dir') {
+          // Simula que estamos en un repo git
+          return;
+        }
         if (cmd.includes('git config')) {
-          throw new Error('Not a git repository');
+          throw new Error('Permission denied');
         }
       });
 
@@ -785,7 +846,7 @@ describe('install-hooks', () => {
 
       expect(warnSpy).toHaveBeenCalledWith(
         '⚠️ Could not setup library git hooks:',
-        'Not a git repository'
+        'Permission denied'
       );
     });
   });

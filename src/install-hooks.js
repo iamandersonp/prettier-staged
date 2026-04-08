@@ -294,11 +294,31 @@ function addScriptToPackageJson() {
 }
 
 /**
+ * Checks if the current directory is inside a git repository
+ */
+function isGitRepository() {
+  try {
+    const { execSync } = require('node:child_process');
+    execSync('git rev-parse --git-dir', { stdio: 'ignore' });
+    return true;
+  } catch {
+    // Command failed, not in a git repository or git not available
+    return false;
+  }
+}
+
+/**
  * Sets up git hooks in the library's own .git-hooks directory
  * (existing functionality)
  */
 function setupLibraryGitHooks() {
   const { execSync } = require('node:child_process');
+
+  // First check if we're in a git repository
+  if (!isGitRepository()) {
+    console.log('ℹ️ Not in a git repository, skipping git hooks configuration');
+    return;
+  }
 
   try {
     // Configure git to use .git-hooks directory
@@ -349,6 +369,7 @@ module.exports = {
   copyEnvExample,
   ensureEnvVariables,
   addScriptToPackageJson,
+  isGitRepository,
   setupLibraryGitHooks,
   installHooks,
   getHooksDirFromEnv,
