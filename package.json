@@ -10,11 +10,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "prettier-staged": "src/index.js",
-    "release": "standard-version",
     "setup:git-hooks": "node src/install-hooks.js",
-    "release:minor": "standard-version --release-as minor",
-    "release:patch": "standard-version --release-as patch",
-    "release:major": "standard-version --release-as major",
     "postinstall": "npm run setup:git-hooks"
   },
   "keywords": [
@@ -42,7 +38,6 @@
   "devDependencies": {
     "@commitlint/cli": "^20.5.0",
     "@commitlint/config-conventional": "^20.5.0",
-    "jest": "^30.3.0",
-    "standard-version": "^9.5.0"
+    "jest": "^30.3.0"
   }
 }
