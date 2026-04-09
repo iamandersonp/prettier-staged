@@ -1,0 +1,17 @@
+{
+  "packages": {
+    ".": {
+      "release-type": "node",
+      "package-name": "@iamandersonp/prettier-staged",
+      "initial-version": "0.6.0",
+      "changelog-path": "CHANGELOG.md",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true
+    }
+  },
+  "plugins": [
+    {
+      "type": "node-workspace"
+    }
+  ]
+}
